@@ -233,8 +233,8 @@ function VennDiagram({ problem, showAnswer, showNotation }: {
   const showNeither = given.neither !== undefined || (showAnswer && hiddenValue === 'neither');
   
   return (
-    <div className="relative overflow-x-auto">
-      <svg viewBox="0 0 320 180" className="w-full max-w-xs mx-auto" preserveAspectRatio="xMidYMid meet">
+    <div className="relative">
+      <svg viewBox="0 0 320 180" className="w-full max-w-sm mx-auto" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="mathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
@@ -551,7 +551,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <Confetti trigger={confettiTrigger} />
       
-      <div className="p-3 sm:p-6 max-w-4xl mx-auto">
+      <div className="p-3 sm:p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
@@ -683,8 +683,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Problems Grid - Single column on mobile */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Problems Grid - Responsive: 1 col mobile, 2 col tablet, 3 col desktop */}
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {problems.map((p) => (
             <div
               key={p.id}
