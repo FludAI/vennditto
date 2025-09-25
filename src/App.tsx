@@ -458,6 +458,54 @@ export default function App() {
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [firstAttempt, setFirstAttempt] = useState<Record<number, boolean>>({});
   const [showStats, setShowStats] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [attempts, setAttempts] = useState<Record<number, number>>({});
+  const [feedback, setFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
+
+  const checkAnswer = (id: number) => {
+    const problem = problems.find(p => p.id === id);
+    if (!problem) return;
+    
+    const userAnswer = parseInt(userAnswers[id] || '0');
+    const isCorrect = userAnswer === problem.answer;
+    
+    setFeedback(prev => ({ ...prev, [id]: isCorrect ? 'correct' : 'incorrect' }));
+    setAttempts(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    
+    if (isCorrect && !solvedProblems.has(id)) {
+      // Mark as solved
+      setSolvedProblems(prev => new Set([...prev, id]));
+      
+      // Check if it was first try (no hints, first attempt)
+      const isFirstTry = !showHints[id] && (attempts[id] || 0) === 0;
+      if (isFirstTry) {
+        setFirstAttempt(prev => ({ ...prev, [id]: true }));
+      }
+      
+      // Update stats
+      const newStats = { ...stats };
+      newStats.totalSolved++;
+      
+      if (isFirstTry) {
+        newStats.firstTryCorrect++;
+        newStats.streak++;
+        newStats.bestStreak = Math.max(newStats.bestStreak, newStats.streak);
+        // Trigger confetti for first-try success
+        setConfettiTrigger(prev => prev + 1);
+      } else {
+        newStats.streak = 0;
+      }
+      
+      // Track by problem type
+      newStats.byType[problem.type] = (newStats.byType[problem.type] || 0) + 1;
+      
+      setStats(newStats);
+      saveStats(newStats);
+      
+      // Always trigger confetti for correct answers
+      setConfettiTrigger(prev => prev + 1);
+    }
+  };
 
   const toggleAnswer = (id: number) => {
     const problem = problems.find(p => p.id === id);
@@ -750,7 +798,51 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Action Buttons - Stack on very small screens */}
+                {/* Answer Input Section */}
+                {!solvedProblems.has(p.id) && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="number"
+                        value={userAnswers[p.id] || ''}
+                        onChange={(e) => {
+                          setUserAnswers(prev => ({ ...prev, [p.id]: e.target.value }));
+                          setFeedback(prev => ({ ...prev, [p.id]: null })); // Clear feedback on typing
+                        }}
+                        placeholder="Your answer"
+                        className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-lg font-semibold"
+                      />
+                      <button
+                        onClick={() => checkAnswer(p.id)}
+                        disabled={!userAnswers[p.id]}
+                        className="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                      >
+                        Check
+                      </button>
+                    </div>
+                    {feedback[p.id] === 'incorrect' && (
+                      <p className="mt-2 text-red-600 font-semibold">
+                        Not quite! Try again. {attempts[p.id] > 2 && '(Hint: Check your calculation)'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Show when solved */}
+                {solvedProblems.has(p.id) && (
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg border-2 border-green-300">
+                    <p className="font-bold text-green-700">
+                      ✅ Correct! The answer is {problems.find(prob => prob.id === p.id)?.answer} students
+                    </p>
+                    {firstAttempt[p.id] && (
+                      <p className="text-sm text-green-600 mt-1">
+                        🌟 First try success! Excellent work!
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons - Only show hints and reveal answer after trying */}
                 <div className="mt-4 flex flex-col xs:flex-row gap-2">
                   <button
                     onClick={() => setShowHints(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
@@ -758,12 +850,14 @@ export default function App() {
                   >
                     {showHints[p.id] ? '💡 Hide Hint' : '💡 Show Hint'}
                   </button>
-                  <button
-                    onClick={() => toggleAnswer(p.id)}
-                    className="flex-1 px-4 py-3 xs:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-semibold hover:from-blue-600 hover:to-green-600 transform hover:scale-105 transition-all duration-200 shadow-md"
-                  >
-                    {showAnswers[p.id] ? '🔒 Hide Answer' : '🔓 Show Answer'}
-                  </button>
+                  {!solvedProblems.has(p.id) && attempts[p.id] > 0 && (
+                    <button
+                      onClick={() => toggleAnswer(p.id)}
+                      className="flex-1 px-4 py-3 xs:py-2 rounded-lg bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold hover:from-gray-500 hover:to-gray-600 transform hover:scale-105 transition-all duration-200 shadow-md"
+                    >
+                      {showAnswers[p.id] ? '🔒 Hide Answer' : '👁️ Reveal Answer'}
+                    </button>
+                  )}
                 </div>
 
                 {/* Hint Box */}
@@ -826,6 +920,9 @@ export default function App() {
               setShowAnswers({});
               setSolvedProblems(new Set());
               setFirstAttempt({});
+              setUserAnswers({});
+              setAttempts({});
+              setFeedback({});
             }}
             className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg rounded-full hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
           >

@@ -1,0 +1,7 @@
+/* App.css */
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}

@@ -3,16 +3,25 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "./src/**/*.tsx",  // Make sure this is included
-    "./src/App.tsx",   // Explicitly include your App
   ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
   safelist: [
+    // Add classes that might be dynamically generated
     'xs:py-2',
     'xs:flex-row',
-    // Add any other dynamic classes if needed
-  ]
+    'md:grid-cols-2',
+    'xl:grid-cols-3',
+    'from-blue-500',
+    'to-green-500',
+    'bg-gradient-to-r',
+    'animate-pulse',
+    'animate-bounce',
+  ],
+  theme: {
+    extend: {
+      screens: {
+        'xs': '475px',
+      },
+    },
+  },
+  plugins: [],
 }
