@@ -2,8 +2,12 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}", // covers everything under src
-    "./src/**/*",                 // catch-all for non-standard imports
+    "./src/**/*.tsx",
+    "./src/**/*.ts",
+    "./src/**/*.jsx",
+    "./src/**/*.js",
+    "./src/*.tsx",  // Explicitly include root src files
+    "./src/*.ts",
   ],
   theme: {
     extend: {},
